@@ -15,14 +15,14 @@
 
 <!-- Add to homescreen for Chrome on Android -->
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="ValueCards">
-<meta name="theme-color" content="#003b64">
+<meta name="application-name" content="StitcherSocial">
+<meta name="theme-color" content="#000000">
 
 <!-- Add to homescreen for Safari on iOS -->
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
 <meta name="apple-mobile-web-app-title" content="Value Cards">
-<meta name="apple-mobile-web-app-status-bar-style" content="#090909">
+<meta name="apple-mobile-web-app-status-bar-style" content="#000000">
 
 <!-- Tile icon for Win8 -->
 <!-- <meta name="msapplication-TileColor" content="#090909">
@@ -30,7 +30,7 @@
 <body>
 <style>
   * {
-    font-family: 'Roboto', 'Avenir Next', 'Avenir', 'Open Sans', Arial, sans-serif;
+    font-family:'Open Sans', Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -45,12 +45,12 @@
     box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
   }
   header, #header {
-    background-color: #eee;
-    color: #000;
+    background-color: #fff;
+    color: #333;
     padding: 8px;
     text-align: left;
     font-size: 18px;
-    font-weight: 300;
+    font-weight: 700;
   }
   .card {
     color: #090909;
@@ -63,8 +63,11 @@
     max-width: 320px;
     padding-bottom: 10px;
   }
+  .feature-image {
+    width: 100%;
+  }
   .title-block {
-    padding: 16px 16px 2px 16px;
+    padding: 0 16px 2px 16px;
   }
   h1, h2, .table, h3, h4{
     text-align: left;
@@ -82,8 +85,8 @@
   }
   #logo {
     margin: auto 0;
-    height: 22px;
-    width: 36px;
+    height: 28px;
+    /*width: 36px;*/
     padding-right: 8px;
     padding-left: 8px;
   }
@@ -176,9 +179,9 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    color: #fff;
+    color: #333;
     font-size: 32px;
-    background-color: #666;
+    background-color: #fff;
     position: fixed;
     right: 16px;
     font-weight: 100;
@@ -205,7 +208,7 @@
 </style>
 
 <header class="flex shadow-1 hide" onclick="toggleAddButton()">
-<!--<img id="logo" src="">-->
+<img id="logo" src="images/stitcher-logo.jpeg">
   <h1 id="header"></h1>
 </header>
 <!-- <input type="checkbox" id="showDone" name="done" value="done"> -->
@@ -215,11 +218,14 @@
 <!--</select>-->
 
 
-<button id="addNew" class="shadow-2 slide-down" onclick="writeUserData('image4', 'Title', 'imageUrl')">+</button>
+<button id="addNew" class="shadow-2 slide-down" onclick="addNew()">+</button>
 
 
 <template>
   <div class="card shadow-1" draggable="true">
+    <div class="line-break">
+      <img class="feature-image" src="images/like-example.png">
+    </div>
     <div class="title-block">
       <h1 contenteditable>Title</h1>
       <h2 contenteditable>Description.</h2>
@@ -251,10 +257,10 @@
 <div id="toast" class="slide-down">Initiative added!</div>
 
 <script src="https://www.gstatic.com/firebasejs/4.9.0/firebase.js"></script>
-<script src="https://www.gstatic.com/firebasejs/4.9.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.9.0/firebase-firestore.js"></script>
 
 <script>
-  const teamName = "Live";
+  const teamName = "stitcherFeatureMap";
 
   // Populate UI using team name
   const properName = teamName.replace(/([A-Z])/g, ' $1').replace(/^./, function(str){ return str.toUpperCase(); });
@@ -263,67 +269,62 @@
 
   // Initialize Firebase
   var config = {
-      apiKey: "AIzaSyA4eC9YvN0DGPLhwmqnQtBXJm3oHSYsBjw",
-      authDomain: "living-data.firebaseapp.com",
-      databaseURL: "https://living-data.firebaseio.com",
-      projectId: "living-data",
-      storageBucket: "living-data.appspot.com",
-      messagingSenderId: "1004897924796"
+    authDomain: "initiative-list.firebaseapp.com",
+    projectId: "initiative-list"
   };
   firebase.initializeApp(config);
+  var firestore = firebase.firestore();
+  const db = firestore.collection(teamName);
 
-  function writeUserData(imageId, title, imageUrl) {
-      firebase.database().ref('images/' + imageId).set({
-          title: name,
-          value: imageUrl
-      });
-  }
+  firestore.collection(teamName).orderBy("priority").get().then((querySnapshot) => {
+    querySnapshot.forEach((doc) => {
+      var currentID = `${doc.id}`;
 
-  var starCountRef = firebase.database().ref('images/image1');
-  starCountRef.on('value', function(snapshot) {
-      // console.log(starCountRef);
-      // updateStarCount(postElement, snapshot.val());
-      return firebase.database().ref('/images/image1').once('value').then(function(snapshot) {
-          var username = (snapshot.val() && snapshot.val().username) || 'Anonymous';
-          console.log(snapshot.val);
-          // ...
+      db.doc(currentID).get().then(function (doc) {
+        if (doc && doc.exists) {
+          var newData = doc.data();
+
+          var temp = document.querySelector("template");
+
+          temp.content.querySelector(".card").id = currentID;
+
+          temp.content.querySelector("h1").textContent = newData.title;
+          temp.content.querySelector("h2").textContent = newData.description;
+
+          temp.content.querySelectorAll(".kpi")[0].textContent = newData.primaryKpi;
+          temp.content.querySelectorAll(".metric")[0].textContent = newData.primaryMetric;
+          temp.content.querySelectorAll(".kpi")[1].textContent = newData.secondaryKpi;
+          temp.content.querySelectorAll(".metric")[1].textContent = newData.secondaryMetric;
+          temp.content.querySelector(".value").textContent = newData.priority;
+          temp.content.querySelector("input").value = newData.colour;
+          temp.content.querySelector(".card").style.backgroundColor = newData.colour;
+          temp.content.querySelectorAll('button')[0].style.backgroundColor = 'transparent';
+          temp.content.querySelectorAll('button')[1].style.backgroundColor = 'transparent';
+          temp.content.querySelectorAll('button')[2].style.backgroundColor = 'transparent';
+          temp.content.querySelectorAll('button')[1].style.color = newData.textColour;
+          temp.content.querySelectorAll('button')[2].style.color = newData.textColour;
+          temp.content.querySelector(".card").style.color = newData.textColour;
+          temp.content.querySelector(".card").querySelectorAll('h2')[0].style.color = newData.textColour;
+          temp.content.querySelector(".card").querySelectorAll('h2')[1].style.color = newData.textColour;
+          temp.content.querySelector(".card").querySelectorAll('h2')[2].style.color = newData.textColour;
+          temp.content.querySelector(".card").querySelector('h4').style.color = newData.textColour;
+
+          // clone the entire node which was just stored temporarily
+          var clone = temp.content.cloneNode(true);
+
+          //Create a new node, based on the template:
+          card = document.importNode(clone, true);
+          //append the new node wherever you like:
+          document.body.appendChild(card);
+        }  else {
+          // doc.data() will be undefined in this case
+          console.log("No such document!");
+        }
+      }).catch(function(error) {
+        console.log("Error getting document:", error);
       });
+    });
   });
-
-  // console.log(starCountRef);
-  // firebase.initializeApp(config);
-  // const db = firebase.database().collection('images');
-
-  // db.collection(teamName).orderBy("priority").get().then((querySnapshot) => {
-  //   querySnapshot.forEach((doc) => {
-  //     var currentID = `${doc.id}`;
-  //
-  //     db.doc(currentID).get().then(function (doc) {
-  //       if (doc && doc.exists) {
-  //         var newData = doc.data();
-  //
-  //         var temp = document.querySelector("template");
-  //
-  //         temp.content.querySelector(".card").id = currentID;
-  //
-  //         temp.content.querySelector("h1").textContent = newData.title;
-  //
-  //         // clone the entire node which was just stored temporarily
-  //         var clone = temp.content.cloneNode(true);
-  //
-  //         //Create a new node, based on the template:
-  //         card = document.importNode(clone, true);
-  //         //append the new node wherever you like:
-  //         document.body.appendChild(card);
-  //       }  else {
-  //         // doc.data() will be undefined in this case
-  //         console.log("No such document!");
-  //       }
-  //     }).catch(function(error) {
-  //       console.log("Error getting document:", error);
-  //     });
-  //   });
-  // });
 
   function toggleAddButton() {
     document.querySelector('#addNew').classList.toggle('slide-down');
@@ -557,7 +558,6 @@
   setTimeout(function() {
     var cards = document.querySelectorAll('.card');
     if (cards.length > 0) {
-      console.log('loaded list!');
       toggleToast('App initialized!');
     }
     [].forEach.call(cards, function(card) {
